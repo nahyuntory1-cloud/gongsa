@@ -1,0 +1,2243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>공사계약 한눈에 보기</title>
+<style>
+  :root {
+    --primary: #1e40af;
+    --primary-light: #3b82f6;
+    --primary-pale: #dbeafe;
+    --secondary: #0f766e;
+    --secondary-pale: #ccfbf1;
+    --accent: #d97706;
+    --accent-pale: #fef3c7;
+    --danger: #dc2626;
+    --danger-pale: #fee2e2;
+    --purple: #7c3aed;
+    --purple-pale: #ede9fe;
+    --gray: #6b7280;
+    --gray-light: #f3f4f6;
+    --gray-border: #e5e7eb;
+    --text: #111827;
+    --text-soft: #4b5563;
+    --white: #ffffff;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f8fafc;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 50%, #2563eb 100%);
+    padding: 32px 24px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: -40px;
+    width: 140px; height: 140px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+  .header h1 {
+    color: #fff;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+  }
+  .header p {
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+    position: relative;
+    z-index: 1;
+  }
+  .header-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 12px;
+    padding: 3px 12px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Nav ── */
+  .nav {
+    background: #fff;
+    border-bottom: 1px solid var(--gray-border);
+    padding: 0 16px;
+    display: flex;
+    overflow-x: auto;
+    gap: 4px;
+    scrollbar-width: none;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    flex-shrink: 0;
+    padding: 14px 16px;
+    border: none;
+    background: none;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .nav-btn:hover { color: var(--primary); }
+  .nav-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 700;
+  }
+
+  /* ── Main ── */
+  .main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  /* ── Sections ── */
+  .section { display: none; animation: fadeIn 0.3s ease; }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-border);
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Accordion ── */
+  .accordion-item {
+    background: #fff;
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-border);
+    overflow: hidden;
+  }
+  .accordion-header {
+    width: 100%;
+    padding: 16px 20px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.15s;
+  }
+  .accordion-header:hover { background: var(--gray-light); }
+  .accordion-header .acc-icon { font-size: 20px; }
+  .accordion-header .acc-arrow {
+    margin-left: auto;
+    transition: transform 0.3s;
+    color: var(--gray);
+    font-size: 12px;
+  }
+  .accordion-header.open .acc-arrow { transform: rotate(180deg); }
+  .accordion-body {
+    display: none;
+    padding: 0 20px 20px;
+    border-top: 1px solid var(--gray-border);
+  }
+  .accordion-body.open { display: block; }
+
+  /* ── Table ── */
+  .tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+  .tbl th {
+    background: var(--primary);
+    color: #fff;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+  }
+  .tbl th:first-child { border-radius: 8px 0 0 0; }
+  .tbl th:last-child { border-radius: 0 8px 0 0; }
+  .tbl td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gray-border);
+    vertical-align: top;
+    line-height: 1.6;
+  }
+  .tbl tr:nth-child(even) td { background: var(--gray-light); }
+  .tbl tr:last-child td { border-bottom: none; }
+
+  /* ── Badges / Tags ── */
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin: 1px;
+  }
+  .badge-blue { background: var(--primary-pale); color: var(--primary); }
+  .badge-green { background: var(--secondary-pale); color: var(--secondary); }
+  .badge-orange { background: var(--accent-pale); color: var(--accent); }
+  .badge-red { background: var(--danger-pale); color: var(--danger); }
+  .badge-purple { background: var(--purple-pale); color: var(--purple); }
+
+  /* ── Info boxes ── */
+  .info-box {
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 12px 0;
+    font-size: 13.5px;
+    line-height: 1.7;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .info-box .ib-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .info-box.blue { background: var(--primary-pale); border-left: 3px solid var(--primary); }
+  .info-box.green { background: var(--secondary-pale); border-left: 3px solid var(--secondary); }
+  .info-box.orange { background: var(--accent-pale); border-left: 3px solid var(--accent); }
+  .info-box.red { background: var(--danger-pale); border-left: 3px solid var(--danger); }
+  .info-box.purple { background: var(--purple-pale); border-left: 3px solid var(--purple); }
+
+  /* ── Flow chart ── */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 12px 0;
+  }
+  .flow-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .flow-line {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .flow-circle {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .flow-connector {
+    width: 2px;
+    height: 28px;
+    background: linear-gradient(to bottom, var(--primary), var(--primary-light));
+    margin: 2px 0;
+  }
+  .flow-content {
+    flex: 1;
+    background: #fff;
+    border: 1px solid var(--gray-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 4px;
+    box-shadow: var(--shadow);
+  }
+  .flow-content h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .flow-content p { font-size: 13px; color: var(--text-soft); line-height: 1.6; }
+
+  /* ── Grid ── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 12px 0;
+  }
+  @media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .mini-card {
+    background: #fff;
+    border: 1px solid var(--gray-border);
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .mini-card h4 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mini-card ul {
+    list-style: none;
+    font-size: 13px;
+    color: var(--text-soft);
+    line-height: 1.8;
+  }
+  .mini-card ul li::before {
+    content: '▸ ';
+    color: var(--primary-light);
+    font-size: 11px;
+  }
+
+  /* ── Amount badge ── */
+  .amount-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--gray-light);
+    margin: 6px 0;
+    font-size: 13px;
+  }
+  .amount-row .label { color: var(--text-soft); }
+  .amount-row .value { font-weight: 700; color: var(--primary); }
+
+  /* ── Tip ── */
+  .tip {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    margin: 10px 0;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    line-height: 1.7;
+  }
+  .tip strong { color: #92400e; }
+
+  /* ── Comparison ── */
+  .vs-box {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 12px;
+    align-items: start;
+    margin: 12px 0;
+  }
+  .vs-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 18px;
+    color: var(--gray);
+    padding-top: 16px;
+  }
+  .vs-col {
+    background: #fff;
+    border: 1px solid var(--gray-border);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 13px;
+    box-shadow: var(--shadow);
+  }
+  .vs-col h4 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+  .vs-col ul { list-style: none; line-height: 1.9; color: var(--text-soft); }
+  .vs-col ul li::before { content: '• '; color: var(--primary-light); }
+
+  /* ── Quick reference ── */
+  .quick-ref {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0;
+  }
+  .qr-chip {
+    background: var(--primary-pale);
+    color: var(--primary);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .qr-chip:hover { border-color: var(--primary); background: var(--primary); color: #fff; }
+
+  /* ── Checklist ── */
+  .checklist { list-style: none; margin: 8px 0; }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-border);
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li .check {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--secondary-pale);
+    color: var(--secondary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-weight: 700;
+  }
+
+  .sub-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray);
+    margin: 16px 0 6px;
+  }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid var(--gray-border);
+    margin: 16px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-badge">📋 지방자치단체 공사계약</div>
+  <h1>공사계약 한눈에 보기</h1>
+  <p>클릭 한 번으로 핵심 내용 빠르게 확인</p>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showSection('terms')">📖 용어정리</button>
+  <button class="nav-btn" onclick="showSection('types')">🏗️ 공사종류</button>
+  <button class="nav-btn" onclick="showSection('laws')">⚖️ 관련법령</button>
+  <button class="nav-btn" onclick="showSection('special')">🔌 개별법공사</button>
+  <button class="nav-btn" onclick="showSection('split')">✂️ 분할발주</button>
+  <button class="nav-btn" onclick="showSection('wage')">💰 노무비</button>
+  <button class="nav-btn" onclick="showSection('subcontract')">🤝 하도급</button>
+  <button class="nav-btn" onclick="showSection('checklist')">✅ 발주체크리스트</button>
+  <button class="nav-btn" onclick="showSection('docs')">📂 제출서류</button>
+  <button class="nav-btn" onclick="showSection('defect')">🔧 하자 사례</button>
+</nav>
+
+<div class="main">
+
+  <!-- ① 용어정리 -->
+  <div class="section active" id="section-terms">
+    <div class="section-title">
+      <div class="icon" style="background:#dbeafe;">📖</div>
+      공사계약 핵심 용어
+    </div>
+
+    <div class="info-box blue">
+      <span class="ib-icon">💡</span>
+      <div>공사계약을 제대로 이해하려면 정확한 용어 개념이 필수입니다. 각 카드를 눌러 확인하세요.</div>
+    </div>
+
+    <!-- 설계 관련 -->
+    <div class="sub-label">설계 관련 용어</div>
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">📐</span>
+        <span>설계서 · 설계도면 · 시방서</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="grid-2" style="margin-top:12px;">
+          <div class="mini-card">
+            <h4>📄 설계서</h4>
+            <ul>
+              <li>공사설계설명서(시방서)</li>
+              <li>설계도면</li>
+              <li>현장설명서</li>
+              <li>공정별 목적물 물량내역서</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <h4>🗺️ 설계도면</h4>
+            <ul>
+              <li>시공될 공사의 성격·범위 표시</li>
+              <li>약속된 그림으로 표현한 도서</li>
+              <li>공사목적물 내용을 구체적으로 표시</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <h4>📝 시방서 (설계설명서)</h4>
+            <ul>
+              <li>재료·설비·시공기준 설명서</li>
+              <li>설계도면에 기재 어려운 기술 사항</li>
+              <li>행정명세서 포함</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <h4>📋 현장설명서</h4>
+            <ul>
+              <li>현장설명 시 교부하는 도서</li>
+              <li>현장상태 정보 포함</li>
+              <li>입찰가격 결정에 필요한 사항 제공</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 내역서 관련 -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">🧾</span>
+        <span>물량내역서 · 산출내역서 · 일위대가</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <table class="tbl" style="margin-top:12px;">
+          <tr><th>용어</th><th>의미</th></tr>
+          <tr>
+            <td><strong>공정별 목적물<br>물량내역서</strong></td>
+            <td>공종별 품목·비목과 규격·수량·단위가 표시된 내역서. 입찰공고 후 참가자에게 교부</td>
+          </tr>
+          <tr>
+            <td><strong>산출내역서</strong></td>
+            <td>발주기관이 교부한 물량내역서에 입찰자가 단가를 기재해 제출한 내역서</td>
+          </tr>
+          <tr>
+            <td><strong>표준품셈</strong></td>
+            <td>인력/기계로 물체를 만드는 데 소요되는 노력과 재료를 수량으로 표시한 것</td>
+          </tr>
+          <tr>
+            <td><strong>일위대가</strong></td>
+            <td>표준품셈 × 단가 = 재료비·인건비·소모품·기계손료 등을 세부 비용으로 예측</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 계약 관련 -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">📑</span>
+        <span>도급 · 하도급 · 관급자재</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <table class="tbl" style="margin-top:12px;">
+          <tr><th>용어</th><th>의미</th></tr>
+          <tr>
+            <td><strong>도급</strong></td>
+            <td>건설공사를 완성할 것을 약정하고, 그 결과에 대한 대가를 지급받는 계약</td>
+          </tr>
+          <tr>
+            <td><strong>하도급</strong></td>
+            <td>도급받은 공사의 전부/일부를 다시 제3자와 체결하는 계약</td>
+          </tr>
+          <tr>
+            <td><strong>발주자</strong></td>
+            <td>건설공사를 건설사업자에게 도급하는 자 (수급인은 제외)</td>
+          </tr>
+          <tr>
+            <td><strong>도급자설치 관급자재</strong></td>
+            <td>발주기관이 직접 구입해 계약상대자가 설치·시공하는 자재 (예: 레미콘, 철근)</td>
+          </tr>
+          <tr>
+            <td><strong>관급자설치 관급자재</strong></td>
+            <td>발주기관이 직접 구입·설치하는 자재 (예: 방송장비, 냉난방기)</td>
+          </tr>
+          <tr>
+            <td><strong>공사이행보증서</strong></td>
+            <td>계약상대자가 의무 미이행 시 보증기관이 대신 이행하거나 금액을 지급하는 보증서</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 공사 관련 -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">🏠</span>
+        <span>공종 · 공정 · 공사감독관</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div style="margin-top:12px;">
+          <div class="amount-row">
+            <span class="label">🔧 공종</span>
+            <span class="value" style="font-weight:400; color: var(--text);">공사의 종류 (예: 가설공사, 목공사, 전기공사)</span>
+          </div>
+          <div class="amount-row">
+            <span class="label">📅 공정</span>
+            <span class="value" style="font-weight:400; color: var(--text);">공사의 진행 과정, 시간과 관계된 진척도</span>
+          </div>
+          <div class="amount-row">
+            <span class="label">👷 공사감독관</span>
+            <span class="value" style="font-weight:400; color: var(--text);">지방자치단체가 임명한 기술직원 또는 대리인</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 공사종류 -->
+  <div class="section" id="section-types">
+    <div class="section-title">
+      <div class="icon" style="background:#ccfbf1;">🏗️</div>
+      건설공사 종류 구분
+    </div>
+
+    <!-- 종합 vs 전문 -->
+    <div class="card">
+      <div class="card-title">🏛️ 종합공사 vs 전문공사</div>
+      <div class="vs-box">
+        <div class="vs-col" style="border-top: 3px solid var(--primary);">
+          <h4 style="color:var(--primary);">🏗️ 종합공사 (5종)</h4>
+          <ul>
+            <li>토목공사업</li>
+            <li>건축공사업</li>
+            <li>토목건축공사업</li>
+            <li>산업환경설비공사업</li>
+            <li>조경공사업</li>
+          </ul>
+          <div class="info-box blue" style="margin-top:10px; font-size:12px;">
+            <span class="ib-icon">ℹ️</span>
+            <div>2개 이상 공종으로 구성된 복합공사를 원도급 받아 전문업체에 하도급</div>
+          </div>
+        </div>
+        <div class="vs-center">⟺</div>
+        <div class="vs-col" style="border-top: 3px solid var(--secondary);">
+          <h4 style="color:var(--secondary);">🔧 전문공사 (15종)</h4>
+          <ul>
+            <li>지반조성·포장공사업</li>
+            <li>실내건축공사업</li>
+            <li>금속창호·지붕건축물조립공사업</li>
+            <li>도장·습식·방수·석공사업</li>
+            <li>조경식재·시설물공사업</li>
+            <li>철근·콘크리트공사업</li>
+            <li>구조물해체·비계공사업 등</li>
+          </ul>
+        </div>
+      </div>
+      <div class="info-box orange" style="margin-top:12px;">
+        <span class="ib-icon">🔄</span>
+        <div><strong>2022년 1월부터 상호 시장 진출 가능!</strong> 종합↔전문 업역 규제 개편으로 상대방 공사에도 참여할 수 있게 됨</div>
+      </div>
+    </div>
+
+    <!-- 신설 vs 유지보수 -->
+    <div class="card">
+      <div class="card-title">🆕 신설공사 vs 유지보수공사</div>
+      <table class="tbl">
+        <tr>
+          <th>구분</th>
+          <th>신설공사</th>
+          <th>유지보수공사</th>
+        </tr>
+        <tr>
+          <td><strong>정의</strong></td>
+          <td>시설물을 새로 설치하는 공사<br>(부지조성 포함)</td>
+          <td>완공 후 기능 보전·점검·개량·보수 공사</td>
+        </tr>
+        <tr>
+          <td><strong>2개+ 공종 구성 시</strong></td>
+          <td><span class="badge badge-blue">종합공사</span></td>
+          <td>종합적 관리 필요 시 <span class="badge badge-blue">종합</span><br>불필요 시 <span class="badge badge-green">시설물공사</span></td>
+        </tr>
+        <tr>
+          <td><strong>1개 공종 구성 시</strong></td>
+          <td><span class="badge badge-green">전문공사</span></td>
+          <td><span class="badge badge-green">전문공사</span></td>
+        </tr>
+        <tr>
+          <td><strong>실적신고</strong></td>
+          <td>소속 협회 (대한건설협회 등)</td>
+          <td>건설산업정보센터 (KISCON)</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 학교 관련 전문공사 -->
+    <div class="card">
+      <div class="card-title">🏫 학교 현장 주요 전문공사</div>
+      <div class="grid-2">
+        <div class="mini-card">
+          <h4>🪟 실내건축공사업</h4>
+          <ul>
+            <li>실내공간 제작</li>
+            <li>마감공사</li>
+          </ul>
+        </div>
+        <div class="mini-card">
+          <h4>🎨 도장·습식·방수·석공사업</h4>
+          <ul>
+            <li>미장·타일·방수공사</li>
+            <li>석재·돌붙임공사</li>
+          </ul>
+        </div>
+        <div class="mini-card">
+          <h4>🏗️ 철근·콘크리트공사업</h4>
+          <ul>
+            <li>철근 가공·조립</li>
+            <li>콘크리트 타설</li>
+          </ul>
+        </div>
+        <div class="mini-card">
+          <h4>🌿 조경식재·시설물공사업</h4>
+          <ul>
+            <li>조경수목·잔디 식재</li>
+            <li>조경석·야외의자 설치</li>
+          </ul>
+        </div>
+        <div class="mini-card">
+          <h4>🛗 승강기·삭도공사업</h4>
+          <ul>
+            <li>엘리베이터 설치</li>
+            <li>무빙워크</li>
+          </ul>
+        </div>
+        <div class="mini-card">
+          <h4>❄️ 기계가스설비공사업</h4>
+          <ul>
+            <li>공조기·냉난방 공사</li>
+            <li>기계설비 공사</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 공사기간 산정 -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">📅</span>
+        <span>공사기간 산정 방법</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="info-box blue" style="margin-top:12px;">
+          <span class="ib-icon">📐</span>
+          <div><strong>공사기간 = 준비기간 + 비작업일수 + 작업일수 + 정리기간</strong></div>
+        </div>
+        <table class="tbl" style="margin-top:8px;">
+          <tr><th>구분</th><th>내용</th></tr>
+          <tr><td><strong>준비기간</strong></td><td>해당 공사 내용에 적합한 준비기간 산정</td></tr>
+          <tr>
+            <td><strong>비작업일수</strong></td>
+            <td>법정공휴일수 + 기상조건 비작업일수 - 중복일수<br>
+            <span style="color:var(--text-soft); font-size:12px;">최근 5년 또는 10년 기상통계 활용</span></td>
+          </tr>
+          <tr>
+            <td><strong>작업일수</strong></td>
+            <td>주공정 기준 총 작업일수<br>
+            <span style="color:var(--text-soft); font-size:12px;">법정 근로시간 (1일 8시간, 주 40시간) 준수 원칙</span></td>
+          </tr>
+          <tr><td><strong>정리기간</strong></td><td>공사 규모 및 시설물 특성 등을 고려하여 산출</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 관련법령 -->
+  <div class="section" id="section-laws">
+    <div class="section-title">
+      <div class="icon" style="background:#ede9fe;">⚖️</div>
+      공사계약 관련 법령
+    </div>
+
+    <div class="card">
+      <div class="card-title">📚 법령 체계</div>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-line">
+            <div class="flow-circle" style="background: var(--primary);">일</div>
+            <div class="flow-connector"></div>
+          </div>
+          <div class="flow-content">
+            <h4>일반법 (기본)</h4>
+            <p>지방계약법 · 지방계약법 시행령 · 지방계약법 시행규칙<br>
+            근로기준법 · 국민연금법 · 고용보험법 · 산업안전보건법</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line">
+            <div class="flow-circle" style="background: var(--secondary);">개</div>
+            <div class="flow-connector"></div>
+          </div>
+          <div class="flow-content">
+            <h4>개별법 (공사 종류별)</h4>
+            <p>건설산업기본법 · 전기공사업법 · 정보통신공사업법<br>
+            소방시설공사업법 · 기계설비법 · 문화재수리법</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line">
+            <div class="flow-circle" style="background: var(--accent);">예</div>
+          </div>
+          <div class="flow-content">
+            <h4>주요 예규 (행정안전부)</h4>
+            <p>「지방자치단체 입찰 및 계약 집행기준」<br>
+            「지방자치단체 입찰시 낙찰자 결정기준」<br>
+            「종합평가 낙찰자 결정기준」</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">📋</span>
+        <span>핵심 예규 내용 — 공사계약 일반조건 등</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <table class="tbl" style="margin-top:12px;">
+          <tr><th>예규</th><th>주요 내용</th></tr>
+          <tr>
+            <td>입찰 및 계약<br>집행기준</td>
+            <td>공사 이행보증 운용 / 공사 손해보험 운용 / 수의계약 운영요령 / 선금·대가 지급요령 / 공사계약 일반조건</td>
+          </tr>
+          <tr>
+            <td>낙찰자<br>결정기준</td>
+            <td>적격심사 세부기준 / 종합평가 낙찰자 결정기준 / 건설업역 개편에 따른 기준</td>
+          </tr>
+          <tr>
+            <td>하도급거래<br>공정화지침</td>
+            <td>원사업자·수급사업자 준수사항 / 법 위반행위 예방 / 공정한 하도급거래질서 확립</td>
+          </tr>
+        </table>
+        <div class="tip" style="margin-top:10px;">
+          ⚠️ <strong>주의:</strong> 계약 관련 법령·예규 등은 수시로 제·개정되므로 반드시 최신 법령을 확인하세요!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ 개별법 공사 -->
+  <div class="section" id="section-special">
+    <div class="section-title">
+      <div class="icon" style="background:#fef3c7;">🔌</div>
+      개별법에 따른 공사 (분리발주)
+    </div>
+
+    <div class="info-box orange">
+      <span class="ib-icon">⚡</span>
+      <div>전기·통신·소방 공사는 별도 법령으로 규정되며, 원칙적으로 건설공사와 <strong>분리하여 발주</strong>해야 합니다.</div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">⚡</span>
+        <span>전기공사 (전기공사업법)</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div style="margin-top:12px;">
+          <div class="info-box blue">
+            <span class="ib-icon">ℹ️</span>
+            <div>전기설비·전력 사용장소 전기계장설비 등의 설치·유지·보수 공사와 부대공사</div>
+          </div>
+          <p class="sub-label">분리발주 예외 (3가지)</p>
+          <ul class="checklist">
+            <li><span class="check">1</span>공사의 성질상 분리하여 발주할 수 없는 경우</li>
+            <li><span class="check">2</span>긴급한 조치가 필요한 공사로 기술관리상 분리할 수 없는 경우</li>
+            <li><span class="check">3</span>국방 및 국가안보 관련 기밀유지 공사</li>
+          </ul>
+          <div class="tip">
+            💡 <strong>경미한 전기공사</strong>는 전기공사업자가 아니어도 가능 (꽂음접속기 교환, 소형변압기 2차측 공사 등)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">📡</span>
+        <span>정보통신공사 (정보통신공사업법)</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div style="margin-top:12px;">
+          <div class="info-box blue">
+            <span class="ib-icon">ℹ️</span>
+            <div>정보통신설비의 설치·유지·보수 공사 및 부대공사 (CCTV 설치, 교사 증축 통신공사 등)</div>
+          </div>
+          <p class="sub-label">분리도급 예외 (6가지)</p>
+          <ul class="checklist">
+            <li><span class="check">1</span>특허공법 등 특수한 기술로 하자책임구분이 불명확한 경우</li>
+            <li><span class="check">2</span>도로공사에 부수되어 동시 시공하는 지하관로 설비공사</li>
+            <li><span class="check">3</span>천재지변·비상재해로 인한 긴급복구공사</li>
+            <li><span class="check">4</span>국방·국가안보 관련 기밀 공사</li>
+            <li><span class="check">5</span>통신구설비공사</li>
+            <li><span class="check">6</span>경미한 공사</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">🔥</span>
+        <span>소방시설공사 (소방시설공사업법)</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div style="margin-top:12px;">
+          <div class="info-box blue">
+            <span class="ib-icon">ℹ️</span>
+            <div>소방시설의 신설·증설·개설·이전·정비 공사<br>
+            ⚠️ 학교(교사·급식시설·합숙소)는 <strong>특정소방대상물</strong>에 해당!</div>
+          </div>
+          <div class="grid-2" style="margin-top:10px;">
+            <div class="mini-card">
+              <h4>🔴 전문 소방시설</h4>
+              <ul><li>특정소방대상물의 기계·전기분야 소방시설 공사·정비</li></ul>
+            </div>
+            <div class="mini-card">
+              <h4>🟡 일반 소방시설</h4>
+              <ul>
+                <li>연면적 1만㎡ 미만 기계·전기분야 공사</li>
+                <li>위험물제조소 소방시설 공사</li>
+              </ul>
+            </div>
+          </div>
+          <p class="sub-label" style="margin-top:12px;">분리도급 예외</p>
+          <ul class="checklist">
+            <li><span class="check">1</span>재난 발생으로 긴급 착공하는 공사</li>
+            <li><span class="check">2</span>국방·국가안보 기밀 공사</li>
+            <li><span class="check">3</span>연면적 1천㎡ 이하 비상경보설비 설치</li>
+            <li><span class="check">4</span>일괄입찰(턴키) 또는 대안입찰</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ 분할발주 -->
+  <div class="section" id="section-split">
+    <div class="section-title">
+      <div class="icon" style="background:#fee2e2;">✂️</div>
+      분할발주 — 금지와 허용
+    </div>
+
+    <div class="info-box red">
+      <span class="ib-icon">🚫</span>
+      <div><strong>분할발주는 원칙적으로 금지!</strong> 동일구조물 공사 또는 단일공사는 시기적·구조별·공종별로 분할하지 않고 일괄 계약해야 합니다.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📌 핵심 개념 정리</div>
+      <table class="tbl">
+        <tr><th>개념</th><th>정의</th></tr>
+        <tr>
+          <td><strong>동일구조물 공사</strong></td>
+          <td>기능이 상호 연결되는 일체식 구조물로서 동일인이 계속 시공함이 적합한 시설물</td>
+        </tr>
+        <tr>
+          <td><strong>단일공사</strong></td>
+          <td>해당 연도 예산에 특정 단일사업으로 책정된 공사 + 그 시공지역에서 관련되어 시공되는 부대공사</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card" style="border-top: 3px solid var(--secondary);">
+      <div class="card-title" style="color:var(--secondary);">✅ 분할 계약이 허용되는 경우</div>
+      <ul class="checklist">
+        <li><span class="check">1</span>다른 법령에 따라 분리 발주하도록 규정된 공사 (전기·통신·소방 등)</li>
+        <li><span class="check">2</span>공사의 성질·규모상 공구·구조물을 적정규모로 분할 시공하는 것이 효율적인 공사</li>
+        <li>
+          <span class="check">3</span>
+          <div>
+            공종을 분리해도 하자책임 구분이 용이하고 품질·안전·공정 관리에 지장 없는 공사<br>
+            <span style="font-size:12px; color:var(--text-soft);">
+              (가) 설계서가 별도 작성되는 공사<br>
+              (나) 시공 목적물이 명확하게 구분되는 공사<br>
+              (다) 개별적 시공이 가능한 공사<br>
+              (라) 시공 장소가 달라 독립 시공 가능한 공사
+            </span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="info-box orange">
+      <span class="ib-icon">🗑️</span>
+      <div><strong>건설폐기물 처리용역:</strong> 위탁처리량이 <strong>100톤 이상</strong>인 건설공사는 건설폐기물 처리용역을 반드시 분리 발주해야 합니다.</div>
+    </div>
+
+    <div class="info-box purple">
+      <span class="ib-icon">🏭</span>
+      <div><strong>중소기업 직접구매 의무:</strong><br>
+      • 종합공사 추정가격 40억 원 이상 + 직접구매 대상품목 4천만 원 이상<br>
+      • 전문공사 추정가격 3억 원 이상 + 직접구매 대상품목 4천만 원 이상</div>
+    </div>
+
+    <div class="tip">
+      ⚠️ <strong>주의:</strong> 1인 견적서 제출 수의계약을 위해 의도적으로 분할하거나 시기적으로 나누는 것은 절대 안 됩니다!
+    </div>
+  </div>
+
+  <!-- ⑥ 노무비 -->
+  <div class="section" id="section-wage">
+    <div class="section-title">
+      <div class="icon" style="background:#ccfbf1;">💰</div>
+      노무비 구분관리 & 하도급지킴이
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔄 두 제도 비교</div>
+      <table class="tbl">
+        <tr>
+          <th>구분</th>
+          <th>노무비 구분관리·지급확인제</th>
+          <th>공공발주자 임금직접지급제<br>(하도급지킴이)</th>
+        </tr>
+        <tr>
+          <td><strong>대상</strong></td>
+          <td>도급금액 <span class="badge badge-blue">5천만 원 이상</span><br>공사기간 30일 이상</td>
+          <td>도급금액 <span class="badge badge-green">3천만 원 이상</span><br>공사기간 30일 초과</td>
+        </tr>
+        <tr>
+          <td><strong>범위</strong></td>
+          <td>건설근로자 노무비 지급 확인</td>
+          <td>노무비 + 하도급공사 + 장비·자재대금</td>
+        </tr>
+        <tr>
+          <td><strong>모니터링</strong></td>
+          <td>실시간 확인 불가</td>
+          <td>발주자가 대금지급 과정 실시간 확인</td>
+        </tr>
+        <tr>
+          <td><strong>청구시기</strong></td>
+          <td>매월 청구 가능</td>
+          <td>기성·준공대가 청구 시 가능</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 적용 제외 표 -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">❌</span>
+        <span>적용 제외 대상 한눈에 보기</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <table class="tbl" style="margin-top:12px;">
+          <tr>
+            <th>상황</th>
+            <th>노무비<br>구분관리</th>
+            <th>노무비<br>지급확인</th>
+          </tr>
+          <tr>
+            <td>계약기간 1개월 미만</td>
+            <td style="color:var(--danger);">❌ 미적용</td>
+            <td style="color:var(--secondary);">✅ 적용</td>
+          </tr>
+          <tr>
+            <td>노무비 미리 지급하는 경우</td>
+            <td style="color:var(--danger);">❌ 미적용</td>
+            <td style="color:var(--secondary);">✅ 적용</td>
+          </tr>
+          <tr>
+            <td>계좌이체 불가, 현금 지급하는 경우</td>
+            <td style="color:var(--danger);">❌ 미적용</td>
+            <td style="color:var(--secondary);">✅ 적용</td>
+          </tr>
+          <tr>
+            <td>전원이 계약상대자의 상용근로자인 경우</td>
+            <td style="color:var(--danger);">❌ 미적용</td>
+            <td style="color:var(--danger);">❌ 미적용</td>
+          </tr>
+          <tr>
+            <td>천재지변 등 객관적 사유로 발주자가 인정</td>
+            <td style="color:var(--danger);">❌ 미적용</td>
+            <td style="color:var(--danger);">❌ 미적용</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 하도급지킴이 계좌 -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">🏦</span>
+        <span>하도급지킴이 — 4개 계좌 구조</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="grid-2" style="margin-top:12px;">
+          <div class="mini-card" style="border-top:3px solid var(--primary);">
+            <h4 style="color:var(--primary);">🏦 고정계좌</h4>
+            <ul><li>기성(준공)금 중 노무비 이외 청구금액이 입금되는 계좌</li></ul>
+          </div>
+          <div class="mini-card" style="border-top:3px solid var(--accent);">
+            <h4 style="color:var(--accent);">💸 선금계좌</h4>
+            <ul><li>선금이 입금되는 계좌</li></ul>
+          </div>
+          <div class="mini-card" style="border-top:3px solid var(--secondary);">
+            <h4 style="color:var(--secondary);">👷 노무계좌</h4>
+            <ul><li>기성(준공)금 중 노무비가 입금되는 계좌</li></ul>
+          </div>
+          <div class="mini-card" style="border-top:3px solid var(--gray);">
+            <h4>💳 일반계좌</h4>
+            <ul><li>위 3개 계좌 금액을 이전시켜 현금화하는 계좌</li></ul>
+          </div>
+        </div>
+        <div class="info-box red" style="margin-top:12px;">
+          <span class="ib-icon">🔒</span>
+          <div>계약상대자는 발주자가 지급한 대금을 임의로 인출할 수 없으며, 근로자·자재·장비업자 계좌로만 송금 가능</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑦ 하도급 -->
+  <div class="section" id="section-subcontract">
+    <div class="section-title">
+      <div class="icon" style="background:#dbeafe;">🤝</div>
+      직접시공 & 하도급
+    </div>
+
+    <!-- 직접시공 비율 -->
+    <div class="card" style="border-top: 3px solid var(--primary);">
+      <div class="card-title">👷 직접시공 의무 비율</div>
+      <div class="info-box blue">
+        <span class="ib-icon">ℹ️</span>
+        <div>도급금액 <strong>100억 원 이하이고 70억 원 미만</strong>인 건설공사에 적용</div>
+      </div>
+      <table class="tbl" style="margin-top:10px;">
+        <tr>
+          <th>도급금액</th>
+          <th>직접시공 비율</th>
+        </tr>
+        <tr>
+          <td>3억 원 미만</td>
+          <td><strong style="color:var(--danger);">50% 이상</strong></td>
+        </tr>
+        <tr>
+          <td>3억 원 이상 ~ 10억 원 미만</td>
+          <td><strong style="color:var(--accent);">30% 이상</strong></td>
+        </tr>
+        <tr>
+          <td>10억 원 이상 ~ 30억 원 미만</td>
+          <td><strong style="color:var(--secondary);">20% 이상</strong></td>
+        </tr>
+        <tr>
+          <td>30억 원 이상 ~ 70억 원 미만</td>
+          <td><strong style="color:var(--primary);">10% 이상</strong></td>
+        </tr>
+      </table>
+      <div class="tip" style="margin-top:10px;">
+        📋 계약 체결일로부터 <strong>30일 이내</strong>에 직접시공계획을 발주자에게 통보해야 합니다.
+      </div>
+    </div>
+
+    <!-- 하도급 금지 원칙 -->
+    <div class="card" style="border-top: 3px solid var(--danger);">
+      <div class="card-title" style="color:var(--danger);">🚫 하도급 제한 원칙</div>
+      <ul class="checklist">
+        <li><span class="check" style="background:var(--danger-pale); color:var(--danger);">✗</span>도급받은 건설공사의 전부 또는 주된 공사 전부를 하도급하는 <strong>일괄하도급 금지</strong></li>
+        <li><span class="check" style="background:var(--danger-pale); color:var(--danger);">✗</span>1건 공사 금액이 <strong>10억 원 미만</strong>인 경우 종합공사업체에 하도급 금지</li>
+        <li><span class="check" style="background:var(--danger-pale); color:var(--danger);">✗</span>수급인은 도급받은 전문공사를 원칙적으로 하도급 불가</li>
+      </ul>
+    </div>
+
+    <!-- 하도급 가능한 경우 -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">✅</span>
+        <span>하도급이 가능한 예외적 경우</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="info-box green" style="margin-top:12px;">
+          <span class="ib-icon">📌</span>
+          <div>전문공사 하도급 시: 발주자 서면 승낙 + 하도급금액이 전체 공사금액의 <strong>20% 이하</strong></div>
+        </div>
+        <ul class="checklist" style="margin-top:10px;">
+          <li><span class="check">1</span>신기술(건설기술진흥법 제14조)이 적용되는 공사를 그 기술 개발 업체에 하도급</li>
+          <li><span class="check">2</span>특허권이 설정된 공법을 적용하는 공사를 특허 출원 업체에 하도급</li>
+          <li><span class="check">3</span>점보드릴·쉴드기 등 전용기계 필요 공사를 해당 기계·전문인력 보유업체에 하도급</li>
+          <li><span class="check">4</span>특허권·실용신안권이 설정된 자재를 설치하는 공사를 전문성 보유업체에 하도급</li>
+          <li><span class="check">5</span>그 밖의 종된 공사로 발주자가 인정하는 경우</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 하도급 통보 -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">📮</span>
+        <span>하도급계약 통보 — 제출 서류 목록</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="info-box orange" style="margin-top:12px;">
+          <span class="ib-icon">📅</span>
+          <div>하도급계약 체결일로부터 <strong>30일 이내</strong>에 발주자에게 통보</div>
+        </div>
+        <ul class="checklist" style="margin-top:10px;">
+          <li><span class="check">✓</span>건설공사의 하도급계약 통보서</li>
+          <li><span class="check">✓</span>하도급계약서 사본 (특수조건 포함)</li>
+          <li><span class="check">✓</span>공사내역서 (원도급·하도급 구분)</li>
+          <li><span class="check">✓</span>하도급대금 지급보증서 (공사금액 전액)</li>
+          <li><span class="check">✓</span>예정공정표</li>
+          <li><span class="check">✓</span>현장설명서 (현장설명 실시한 경우)</li>
+          <li><span class="check">✓</span>공사 노무비 구분관리 및 지급확인제 적용제외 신청서</li>
+          <li><span class="check">✓</span>하도급지킴이 이용 확약서</li>
+        </ul>
+        <div class="tip">
+          💡 <strong>지급보증서 생략 가능한 경우:</strong><br>
+          ① 하도급금액 1천만 원 이하 ② 발주자·수급인·하수급인 직접지급 합의 ③ 하도급지킴이 이용
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑧ 발주 체크리스트 -->
+  <div class="section" id="section-checklist">
+    <div class="section-title">
+      <div class="icon" style="background:#ccfbf1;">✅</div>
+      공사 발주 체크리스트
+    </div>
+
+    <div class="info-box green">
+      <span class="ib-icon">🎯</span>
+      <div>발주자는 건설공사 발주 시 아래 순서대로 검토해야 합니다.</div>
+    </div>
+
+    <div class="flow" style="margin-top:16px;">
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-circle">1</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h4>종합공사 vs 전문공사 구분</h4>
+          <p>주된 공종 개수 및 종합적 계획·관리·조정 필요성 판단</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-circle">2</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h4>신설공사 vs 유지보수공사 구분</h4>
+          <p>공사의 성격을 파악하여 입찰공고문에 기재</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-circle">3</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h4>주된 공사 vs 부대공사(종된 공사) 판단</h4>
+          <p>업종별 추정금액 및 비율을 입찰공고문에 기재 (부대공사는 기재 제외)</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-circle">4</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h4>공사기간 산정</h4>
+          <p>준비기간 + 비작업일수 + 작업일수 + 정리기간으로 산정</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-circle">5</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h4>건설공사 시공자격 확인</h4>
+          <p>해당 공사 업종을 등록한 건설사업자에게 입찰 허용</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-circle">6</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h4>상호시장 진출 시 등록기준 충족 확인</h4>
+          <p>종합↔전문 상호진출 허용 시 기술능력·자본금 등록기준 확인</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-circle">7</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h4>직접시공 준수 여부 확인</h4>
+          <p>상호시장 진출 시 직접시공 원칙 적용 — 노무비·자재납품·장비사용 내역 확인</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-circle">8</div>
+        </div>
+        <div class="flow-content">
+          <h4>분리발주 대상 검토</h4>
+          <p>전기·통신·소방, 건설폐기물, 직접구매 의무 대상 여부 확인</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px; border-top: 3px solid var(--accent);">
+      <div class="card-title">⚡ 금액별 주요 기준 요약</div>
+      <table class="tbl">
+        <tr><th>금액 기준</th><th>내용</th></tr>
+        <tr>
+          <td><span class="badge badge-red">3천만 원↑</span></td>
+          <td>하도급지킴이 (공공발주자 임금직접지급제) 의무 적용</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-orange">5천만 원↑</span></td>
+          <td>노무비 구분관리 및 지급확인제 적용</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-blue">2억 원↑</span></td>
+          <td>종합건설사업자의 전문공사 도급 가능</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-blue">3억 원 미만</span></td>
+          <td>2종 이상 전문공사 복합 시 주된 공사 비율 ½ 이상이면 전문공사 발주 가능</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-purple">3억 원↑</span></td>
+          <td>전문공사 직접구매 대상 적용 (중소기업 지원)</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-purple">40억 원↑</span></td>
+          <td>종합공사 직접구매 대상 적용 (중소기업 지원)</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-green">100억 원 이하<br>+70억 원 미만</span></td>
+          <td>직접시공 의무 비율 적용</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="tip" style="margin-top:16px;">
+      ⚠️ <strong>감사 지적 주의 사항:</strong> 수의계약 한도를 피하기 위한 의도적 분할발주는 명백한 위반입니다. 사업 계획단계부터 분할·분리 계약 가능 여부를 사전에 검토하세요.
+    </div>
+  </div>
+
+
+  <!-- ⑨ 제출서류 -->
+  <div class="section" id="section-docs">
+    <div class="section-title">
+      <div class="icon" style="background:#dbeafe;">📂</div>
+      단계별 제출서류 목록
+    </div>
+
+    <div class="info-box blue">
+      <span class="ib-icon">💡</span>
+      <div>공사계약은 크게 <strong>계약체결 → 착공 → 준공 → 대가지급</strong> 4단계로 진행됩니다. 각 단계별 필수 서류를 확인하세요.</div>
+    </div>
+
+    <!-- 계약 체결 시 -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">🖊️</span>
+        <span>계약 체결 시 징구 서류</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="info-box orange" style="margin-top:12px;">
+          <span class="ib-icon">⚠️</span>
+          <div>계약보증금은 공사금액의 <strong>15%</strong> (5천만 원 이하는 지급각서 대체 가능)</div>
+        </div>
+        <div class="grid-2" style="margin-top:10px;">
+          <div class="mini-card" style="border-top:3px solid var(--primary);">
+            <h4>📋 자격·신원 확인 서류</h4>
+            <ul>
+              <li>공사업 면허수첩 및 자격등록증</li>
+              <li>사업자등록증</li>
+              <li>법인등기부등본 (법인인 경우)</li>
+              <li>인감증명서 + 사용인감계</li>
+            </ul>
+          </div>
+          <div class="mini-card" style="border-top:3px solid var(--secondary);">
+            <h4>🔒 보증·계약 서류</h4>
+            <ul>
+              <li>계약보증서 (공사금액의 15%)</li>
+              <li>청렴계약서 (서약서)</li>
+              <li>수의계약각서 (수의계약인 경우)</li>
+              <li>안전보건관리계획서</li>
+            </ul>
+          </div>
+          <div class="mini-card" style="border-top:3px solid var(--accent);">
+            <h4>💰 인지세</h4>
+            <ul>
+              <li>계약금액 1천만 원 이상 시 인지세 납부</li>
+            </ul>
+          </div>
+          <div class="mini-card" style="border-top:3px solid var(--purple);">
+            <h4>🔍 적격 확인 사항</h4>
+            <ul>
+              <li>부정당업자 여부 (나라장터 조회)</li>
+              <li>조세포탈 여부 조회</li>
+              <li>수의계약 배제업체 여부</li>
+              <li>공직자 이해충돌방지법 해당 여부</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 착공계 -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">🏗️</span>
+        <span>착공계 제출 서류 (착공일에 접수)</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="info-box green" style="margin-top:12px;">
+          <span class="ib-icon">ℹ️</span>
+          <div>공사기간 <strong>30일 미만</strong>이고 관련 법령에 특별한 규정이 없는 경우 일부 생략 가능</div>
+        </div>
+        <table class="tbl" style="margin-top:10px;">
+          <tr>
+            <th style="width:36px;">#</th>
+            <th>제출 서류</th>
+            <th>비고 / 적용 조건</th>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td><strong>착공신고서</strong></td>
+            <td>공사계약 일반조건 제5절</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><strong>공사예정공정표</strong></td>
+            <td>공사계약 일반조건 제5절</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><strong>공정별 인력·장비 투입계획서</strong></td>
+            <td>공사계약 일반조건 제5절</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><strong>현장기술인 지정신고서</strong><br><span style="font-size:12px; color:var(--text-soft);">(현장대리인 선임계)</span></td>
+            <td>자격증 사본, 재직증명서, 경력증명서 포함<br>건설산업기본법 제40조</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><strong>산출내역서</strong></td>
+            <td>추정가격 100억 원 미만 공사</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><strong>공사 전 현장사진</strong></td>
+            <td>공사계약 일반조건 제5절</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><strong>고용·산재보험 가입증명원</strong></td>
+            <td>해당 공사현장명으로 가입<br>고용보험법 제8조 / 산재보험법 제6조</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><strong>노무비 구분관리·지급확인제 서류</strong></td>
+            <td>합의서 + 노무비 전용 통장 사본<br>또는 적용제외 확인서</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><strong>산업안전보건관리비 사용계획서</strong></td>
+            <td>공사예정금액 <span class="badge badge-orange">2천만 원 이상</span></td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td><strong>환경관리비 사용계획서</strong><br><span style="font-size:12px; color:var(--text-soft);">(환경보전비 사용계획 포함)</span></td>
+            <td>건설기술진흥법 제66조 / 건설공사만 해당</td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td><strong>품질관리(시험)계획서</strong></td>
+            <td>품질관리비 계상 대상 공사</td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td><strong>퇴직공제부금비 가입증서</strong></td>
+            <td>추정금액 <span class="badge badge-blue">1억 원 이상</span> 건설공사</td>
+          </tr>
+          <tr>
+            <td>13</td>
+            <td><strong>직접시공계획 통보서</strong></td>
+            <td>계약 체결일로부터 30일 이내<br>KISCON 입력 포함</td>
+          </tr>
+          <tr>
+            <td>14</td>
+            <td><strong>인감증명서 + 사용인감계</strong></td>
+            <td>통장 사본(공사비) 첨부</td>
+          </tr>
+          <tr>
+            <td>15</td>
+            <td><strong>하도급지킴이 이용 확약서</strong></td>
+            <td>도급금액 <span class="badge badge-red">3천만 원 이상</span> + 공사기간 30일 초과</td>
+          </tr>
+          <tr>
+            <td>16</td>
+            <td><strong>근로자 대표 현황 통보서</strong></td>
+            <td>일용근로자 채용 시 — 광주교육청 특수조건</td>
+          </tr>
+          <tr>
+            <td>17</td>
+            <td><strong>근로자 안전분야 계획서</strong></td>
+            <td>밀폐 공간 작업 시행 시</td>
+          </tr>
+          <tr>
+            <td>18</td>
+            <td><strong>특허사용 세부협약서</strong></td>
+            <td>특허공법 사용 공사인 경우</td>
+          </tr>
+          <tr>
+            <td>19</td>
+            <td><strong>기타 계약담당공무원 지정 서류</strong></td>
+            <td>공사계약 일반조건 제5절</td>
+          </tr>
+        </table>
+        <div class="tip" style="margin-top:10px;">
+          🔑 <strong>하도급지킴이 확약서 제출 시</strong> 약정계좌 3개(고정계좌·선금계좌·노무계좌) + 일반계좌 1개 통장 사본도 함께 제출해야 합니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- 준공계 -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">🏁</span>
+        <span>준공계 제출 서류 (준공일에 접수)</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <table class="tbl" style="margin-top:12px;">
+          <tr>
+            <th style="width:36px;">#</th>
+            <th>제출 서류</th>
+            <th>비고 / 적용 조건</th>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td><strong>준공신고서</strong><br><span style="font-size:12px; color:var(--text-soft);">(준공검사원 포함)</span></td>
+            <td>공사계약 일반조건 제9절</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><strong>준공내역서</strong></td>
+            <td>공사계약 일반조건 제9절</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><strong>준공 후 사진</strong></td>
+            <td>공사계약 일반조건 제9절</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><strong>고용·산재보험 완납증명서</strong></td>
+            <td>근로복지공단 발급</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><strong>국민연금·건강보험·노인장기요양보험료 납부확인서</strong></td>
+            <td>하수급인 납부확인서 포함<br>공사기간 1개월(30일) 이상 공사</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><strong>건설근로자 퇴직공제부금 납부확인서</strong></td>
+            <td>건설산업기본법 시행령 제83조<br>추정금액 1억 원 이상</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><strong>산업안전보건관리비 사용내역서</strong></td>
+            <td>인건비: 지급명세서 사본<br>기타: 세금계산서, 거래명세서 등</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><strong>환경보전비 사용내역서</strong></td>
+            <td>사용내역 없을 시 준공금에서 감액</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><strong>품질관리비 사용내역서</strong></td>
+            <td>건설기술진흥법 제55조</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td><strong>건설공사 하도급대금 지급보증서<br>발급수수료 납부확인서</strong></td>
+            <td>건설산업기본법 제34조</td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td><strong>건설기계대여금 지급보증서<br>발급수수료 납부확인서</strong></td>
+            <td>건설산업기본법 제68조의3</td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td><strong>폐기물처리내역서</strong></td>
+            <td>건설폐기물처리계획신고필증,<br>수집·운반(처리)확인서, 계량증명서 등<br><span style="color:var(--text-soft); font-size:12px;">5톤 미만: 생활폐기물 / 5톤 이상: 올바로시스템</span></td>
+          </tr>
+          <tr>
+            <td>13</td>
+            <td><strong>선금사용내역보고서</strong></td>
+            <td>선금 수령한 경우</td>
+          </tr>
+          <tr>
+            <td>14</td>
+            <td><strong>수도광열비 지급내역서</strong></td>
+            <td>전기·수도 등 공공요금 사용 시</td>
+          </tr>
+          <tr>
+            <td>15</td>
+            <td><strong>공사근로자 노무비 지급내역서</strong></td>
+            <td>노무비 구분관리제 적용 제외 신고한 경우</td>
+          </tr>
+          <tr>
+            <td>16</td>
+            <td><strong>각종 필증</strong></td>
+            <td>도시가스공사 완성검사서,<br>소방시설 완공 검사필증 등</td>
+          </tr>
+          <tr>
+            <td>17</td>
+            <td><strong>그 밖에 계약담당자가 지정한 서류</strong></td>
+            <td>하자보수보증서 등 필요 서류</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 대가지급 시 -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">💳</span>
+        <span>대가 지급 시 확인 서류</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <ul class="checklist" style="margin-top:12px;">
+          <li><span class="check">✓</span>대금청구서</li>
+          <li><span class="check">✓</span>세금계산서</li>
+          <li><span class="check">✓</span>국민건강보험료·국민연금보험료 완납증명서<br><span style="font-size:12px; color:var(--text-soft);">(수의계약인 경우 국세·지방세 완납증명서는 생략 가능)</span></li>
+          <li><span class="check">✓</span>하자보수보증금 납부 또는 하자보증서<br><span style="font-size:12px; color:var(--text-soft);">계약금액 3천만 원 이하 공사는 하자보수보증금 납부 면제 가능 (하자보증각서 징구 권장)</span></li>
+        </ul>
+        <div class="info-box red" style="margin-top:10px;">
+          <span class="ib-icon">⏰</span>
+          <div>대가는 청구일로부터 <strong>5일 이내</strong> 지급 (공휴일·토요일 제외). 채권압류 여부도 반드시 사전 확인!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 보험료 사후정산 -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">🧮</span>
+        <span>보험료 등 사후정산 — 증빙서류 정리</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <table class="tbl" style="margin-top:12px;">
+          <tr>
+            <th>보험 종류</th>
+            <th>적용 대상</th>
+            <th>구비 서류</th>
+          </tr>
+          <tr>
+            <td><strong>고용보험·산재보험</strong></td>
+            <td>모든 건설공사 (고용보험은 2천만 원 미만 제외)</td>
+            <td>근로복지공단 발급 완납증명서<br><span style="color:var(--danger); font-size:12px;">※ 사후정산 대상 제외 (미납 시 감액)</span></td>
+          </tr>
+          <tr>
+            <td><strong>국민연금·건강보험·<br>노인장기요양보험</strong></td>
+            <td>공사기간 1개월(30일) 이상</td>
+            <td>납입확인서 (공단 발급)<br>일용근로자: 해당 현장명 단위로 기재된 확인서<br>상용근로자: 근로내역확인서, 현장작업일지, 임금대장</td>
+          </tr>
+          <tr>
+            <td><strong>산업안전보건관리비</strong></td>
+            <td>공사예정금액 2천만 원 이상</td>
+            <td>인건비: 지급명세서 사본<br>기타: 세금계산서·거래명세서, 각종 사진</td>
+          </tr>
+          <tr>
+            <td><strong>품질관리비</strong></td>
+            <td>품질관리비 계상 대상 공사</td>
+            <td>사용내역서 + 증빙서류</td>
+          </tr>
+          <tr>
+            <td><strong>환경보전비</strong></td>
+            <td>건설공사</td>
+            <td>사용내역서 (미사용 시 준공금에서 감액)</td>
+          </tr>
+        </table>
+        <div class="tip" style="margin-top:10px;">
+          📋 법정 정산금액은 준공검사 시 <strong>납입확인서·사용내역서·지출영수증</strong> 등 증빙서류를 제출하고 감독공무원의 검사를 받아야 합니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- 전체 흐름 요약 -->
+    <div class="card" style="margin-top:20px; border-top: 3px solid var(--primary);">
+      <div class="card-title">🗺️ 계약 단계별 서류 흐름 요약</div>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-line">
+            <div class="flow-circle" style="background:var(--purple);">계</div>
+            <div class="flow-connector" style="background:linear-gradient(to bottom, var(--purple), var(--primary));"></div>
+          </div>
+          <div class="flow-content">
+            <h4>① 계약 체결</h4>
+            <p>면허수첩, 사업자등록증, 법인등기부등본, 인감증명서, 계약보증서, 청렴계약서, 안전보건관리계획서</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line">
+            <div class="flow-circle" style="background:var(--primary);">착</div>
+            <div class="flow-connector"></div>
+          </div>
+          <div class="flow-content">
+            <h4>② 착공계 (착공일 당일)</h4>
+            <p>착공신고서, 공정표, 현장대리인선임계, 산출내역서, 현장사진, 고용·산재보험 가입증명, 노무비 합의서, 안전보건관리비 계획서, 퇴직공제부금 가입증서, 직접시공계획서, 하도급지킴이 확약서 등</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line">
+            <div class="flow-circle" style="background:var(--secondary);">준</div>
+            <div class="flow-connector" style="background:linear-gradient(to bottom, var(--secondary), var(--accent));"></div>
+          </div>
+          <div class="flow-content">
+            <h4>③ 준공계 (준공일 당일)</h4>
+            <p>준공신고서, 준공내역서, 준공사진, 고용·산재 완납증명, 보험료 납부확인서, 안전보건관리비·품질관리비·환경보전비 사용내역서, 폐기물처리내역서, 각종 필증 등</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line">
+            <div class="flow-circle" style="background:var(--accent);">검</div>
+            <div class="flow-connector" style="background:linear-gradient(to bottom, var(--accent), var(--danger));"></div>
+          </div>
+          <div class="flow-content">
+            <h4>④ 준공검사</h4>
+            <p>이행완료 통지일로부터 <strong>14일 이내</strong> 실시. 3천만 원 이하는 조서 작성 생략 가능 (검사는 필수)</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line">
+            <div class="flow-circle" style="background:var(--danger);">대</div>
+          </div>
+          <div class="flow-content">
+            <h4>⑤ 대가 지급 (청구일로부터 5일 이내)</h4>
+            <p>대금청구서, 세금계산서, 건강·연금 완납증명서, 하자보수보증금(또는 각서), 채권압류 여부 확인</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 🔧 하자 사례 -->
+  <div class="section" id="section-defect">
+    <div class="section-title">
+      <div class="icon" style="background:#fee2e2;">🔧</div>
+      학교 공사 하자 — 주요 규정 & 사례
+    </div>
+
+    <!-- 하자 기본 규정 -->
+    <div class="card">
+      <div class="card-title">📋 하자담보책임 기본 규정</div>
+      <div class="grid-2">
+        <div class="mini-card" style="border-top:3px solid var(--primary);">
+          <h4>📅 하자검사 주기</h4>
+          <ul>
+            <li>하자담보책임기간 중 <strong>연 2회 이상</strong> 정기검사</li>
+            <li>만료 <strong>14일 전~만료일</strong>: 최종검사 (정기검사와 별도)</li>
+            <li>검사 후 하자검사조서 작성·비치</li>
+          </ul>
+        </div>
+        <div class="mini-card" style="border-top:3px solid var(--secondary);">
+          <h4>💰 하자보수보증금</h4>
+          <ul>
+            <li>지방계약법 시행규칙 제70조에 따른 보증금율 적용</li>
+            <li>계약금액 <strong>3천만 원 이하</strong>: 납부 면제 가능<br><span style="font-size:12px;">(하자보증각서 징구 권장)</span></li>
+            <li>준공 시 하자보수보증금 납부 또는 하자보증서 제출 확인</li>
+          </ul>
+        </div>
+        <div class="mini-card" style="border-top:3px solid var(--accent);">
+          <h4>📝 하자검사조서</h4>
+          <ul>
+            <li>계약금액 <strong>3천만 원 초과</strong>: 조서 작성 필수</li>
+            <li>3천만 원 이하: 조서 생략 가능 (검사는 필수)</li>
+            <li>⚠️ <strong>조경공사는 금액 무관 조서 작성</strong></li>
+          </ul>
+        </div>
+        <div class="mini-card" style="border-top:3px solid var(--danger);">
+          <h4>⚠️ 하자 발생 시 조치</h4>
+          <ul>
+            <li>계약상대자에게 하자보수 통보</li>
+            <li>정당한 사유 없이 보수 거부 시 → 하자보수보증금 세입 조치</li>
+            <li>하자보증금은 준공대금과 공제·상계 가능</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 하자담보책임기간 표 -->
+    <div class="card">
+      <div class="card-title">📊 공종별 하자담보책임기간 (지방계약법 시행규칙 제68조)</div>
+      <table class="tbl">
+        <tr>
+          <th>하자담보책임기간</th>
+          <th>해당 공종</th>
+        </tr>
+        <tr>
+          <td style="text-align:center;"><span class="badge badge-red" style="font-size:14px; padding:4px 14px;">10년</span></td>
+          <td>토목공사, 건축공사(구조체: 기초, 기둥, 보, 내력벽, 바닥판, 지붕틀)</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;"><span class="badge badge-orange" style="font-size:14px; padding:4px 14px;">5년</span></td>
+          <td>방수공사, 도배·마감공사, 철근·콘크리트공사 (구조체 제외), 포장공사</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;"><span class="badge badge-purple" style="font-size:14px; padding:4px 14px;">3년</span></td>
+          <td>창호공사, 금속공사, 타일공사, 미장공사, 석공사, 조경공사 (식재)</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;"><span class="badge badge-blue" style="font-size:14px; padding:4px 14px;">2년</span></td>
+          <td>도장공사, 유리공사, 조경공사 (시설물), 전기공사, 정보통신공사, 소방공사, 기계설비공사</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;"><span class="badge badge-green" style="font-size:14px; padding:4px 14px;">1년</span></td>
+          <td>수장공사 (도배·장판 등 마감류), 지붕·판금공사, 잡공사</td>
+        </tr>
+      </table>
+      <div class="tip" style="margin-top:8px;">
+        💡 복합공종인 경우 각 공종별로 하자담보책임기간이 다르게 적용됩니다. 계약서 작성 시 공종별로 구분하여 명기하세요.
+      </div>
+    </div>
+
+    <!-- 주요 하자 사례 -->
+    <div class="sub-label" style="margin-top:8px;">학교 현장 주요 하자 유형별 사례</div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">💧</span>
+        <span>누수·방수 하자 — 가장 빈번한 감사 지적 유형</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="info-box red" style="margin-top:12px;">
+          <span class="ib-icon">📌</span>
+          <div><strong>하자담보책임기간: 방수공사 5년</strong></div>
+        </div>
+        <div class="grid-2" style="margin-top:10px;">
+          <div class="mini-card">
+            <h4>🏫 사례 ① 옥상 방수 하자</h4>
+            <ul>
+              <li><strong>상황:</strong> 옥상 방수공사 준공 후 1년 내 교실 천장 누수 발생</li>
+              <li><strong>원인:</strong> 방수층 도포 불량, 드레인 주위 마감 미흡</li>
+              <li><strong>조치:</strong> 하자보수 청구 → 업체 거부 → 하자보증금으로 직접 보수</li>
+              <li><strong>포인트:</strong> 준공검사 시 드레인 주위, 파라펫 꺾임부 집중 확인</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <h4>🚻 사례 ② 화장실 방수 하자</h4>
+            <ul>
+              <li><strong>상황:</strong> 화장실 리모델링 후 6개월 만에 아래층 천장 얼룩</li>
+              <li><strong>원인:</strong> 바닥 방수 불량, 배관 주위 밀실 충진 미흡</li>
+              <li><strong>조치:</strong> 하자보수 요청 공문 발송 → 기간 내 미이행 → 타업체 보수 후 구상청구</li>
+              <li><strong>포인트:</strong> 타일 재시공 불필요한지 확인 후 방수만 재시공</li>
+            </ul>
+          </div>
+        </div>
+        <div class="info-box orange" style="margin-top:8px;">
+          <span class="ib-icon">💡</span>
+          <div><strong>예방 팁:</strong> 준공 전 담수시험(고인 물 유지 24시간 이상) 실시 확인 요청</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">🪟</span>
+        <span>창호·결로 하자 — 겨울철 민원 다발 유형</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="info-box red" style="margin-top:12px;">
+          <span class="ib-icon">📌</span>
+          <div><strong>하자담보책임기간: 창호공사 3년</strong></div>
+        </div>
+        <div class="grid-2" style="margin-top:10px;">
+          <div class="mini-card">
+            <h4>🌡️ 사례 ① 결로 발생</h4>
+            <ul>
+              <li><strong>상황:</strong> 창호 교체 후 겨울철 창틀 주변 결로·곰팡이 발생</li>
+              <li><strong>원인:</strong> 단열재 설치 불량, 실란트 시공 불량으로 기밀 저하</li>
+              <li><strong>조치:</strong> 시공업체에 하자보수 청구 (하자 발생 사실 사진 등 증거 확보 필수)</li>
+              <li><strong>포인트:</strong> 결로는 시공 하자와 사용자 환기 부족 혼재 — 원인 명확히 구분</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <h4>💨 사례 ② 창호 기밀 불량</h4>
+            <ul>
+              <li><strong>상황:</strong> 창호 교체 후 외풍·빗물 침입</li>
+              <li><strong>원인:</strong> 창호 레일 조정 불량, 패킹 불완전 설치</li>
+              <li><strong>조치:</strong> 하자보수 요청 → 레일 조정 및 패킹 전면 교체</li>
+              <li><strong>포인트:</strong> 준공 시 전체 창호 개폐 상태, 잠금장치 작동 확인</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">🎨</span>
+        <span>도장·도배 하자 — 미관 관련 민원 다발</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="info-box red" style="margin-top:12px;">
+          <span class="ib-icon">📌</span>
+          <div><strong>하자담보책임기간: 도장공사 2년 / 수장공사(도배) 1년</strong></div>
+        </div>
+        <div class="grid-2" style="margin-top:10px;">
+          <div class="mini-card">
+            <h4>🖌️ 사례 ① 외벽 도장 박리</h4>
+            <ul>
+              <li><strong>상황:</strong> 외벽 도장 6개월 후 물집·박리 현상</li>
+              <li><strong>원인:</strong> 바탕면 건조 불충분한 상태에서 도장, 프라이머 생략</li>
+              <li><strong>조치:</strong> 전면 재도장 요청 — 부분 보수는 색상 차이로 미관 저하</li>
+              <li><strong>포인트:</strong> 시공일지(기상조건 포함) 확인이 하자 입증 핵심</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <h4>📄 사례 ② 도배 들뜸·곰팡이</h4>
+            <ul>
+              <li><strong>상황:</strong> 교실 도배 후 3개월 만에 모서리 부분 들뜸</li>
+              <li><strong>원인:</strong> 초배지 생략, 풀칠 불량</li>
+              <li><strong>조치:</strong> 들뜬 부분 재시공 요청 (1년 내 하자)</li>
+              <li><strong>포인트:</strong> 도배는 하자기간 1년으로 짧음 — 준공 직후 점검 중요</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">🌿</span>
+        <span>조경 하자 — 식재 고사 분쟁</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="info-box red" style="margin-top:12px;">
+          <span class="ib-icon">📌</span>
+          <div><strong>하자담보책임기간: 조경 식재 3년 / 조경 시설물 2년</strong><br>
+          ⚠️ 조경공사는 금액 불문 하자검사조서 작성 의무</div>
+        </div>
+        <div class="grid-2" style="margin-top:10px;">
+          <div class="mini-card">
+            <h4>🌳 사례 ① 수목 고사</h4>
+            <ul>
+              <li><strong>상황:</strong> 이식 수목이 준공 후 1년 내 고사</li>
+              <li><strong>원인:</strong> 규격 미달 수목 납품, 이식 후 활착 조치 미흡</li>
+              <li><strong>조치:</strong> 동일 규격 수목으로 교체 요청</li>
+              <li><strong>포인트:</strong> 고사 원인이 시공 불량인지, 학교 관리 소홀인지 구분 필요</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <h4>🌱 사례 ② 잔디 고사</h4>
+            <ul>
+              <li><strong>상황:</strong> 운동장 잔디 식재 후 여름 집중호우로 침수·고사</li>
+              <li><strong>원인 분쟁:</strong> 업체 "배수 불량은 발주처 설계 문제" / 학교 "시공 불량"</li>
+              <li><strong>결론:</strong> 설계서상 배수계획 이행 여부로 책임 구분</li>
+              <li><strong>포인트:</strong> 하자 원인 불분명 시 전문기관 감정 의뢰 가능</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">❄️</span>
+        <span>기계설비·냉난방 하자 — 기능 불량</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="info-box red" style="margin-top:12px;">
+          <span class="ib-icon">📌</span>
+          <div><strong>하자담보책임기간: 기계설비공사 2년</strong></div>
+        </div>
+        <div class="grid-2" style="margin-top:10px;">
+          <div class="mini-card">
+            <h4>❄️ 사례 ① 냉난방기 하자</h4>
+            <ul>
+              <li><strong>상황:</strong> 교실용 냉난방기 설치 후 1년 내 냉방 기능 저하</li>
+              <li><strong>원인:</strong> 냉매 배관 연결 불량으로 냉매 누출</li>
+              <li><strong>조치:</strong> 하자보수 청구 → 배관 재시공 및 냉매 재충전</li>
+              <li><strong>포인트:</strong> 설치 직후 시운전 확인서 징구 필수</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <h4>🔥 사례 ② 보일러·배관 하자</h4>
+            <ul>
+              <li><strong>상황:</strong> 급수펌프 교체 후 6개월 내 배관 누수</li>
+              <li><strong>원인:</strong> 이음부 용접 불량</li>
+              <li><strong>조치:</strong> 하자보수 요청, 해당 부위 재용접 처리</li>
+              <li><strong>포인트:</strong> 기계설비는 육안 점검이 어려워 정기 작동 확인 필요</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">⚡</span>
+        <span>전기·통신 하자 — 안전 관련 중요 유형</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="info-box red" style="margin-top:12px;">
+          <span class="ib-icon">📌</span>
+          <div><strong>하자담보책임기간: 전기공사·정보통신공사 2년</strong></div>
+        </div>
+        <div class="grid-2" style="margin-top:10px;">
+          <div class="mini-card">
+            <h4>💡 사례 ① 조명 설치 하자</h4>
+            <ul>
+              <li><strong>상황:</strong> LED 조명 교체 후 1년 내 일부 등기구 점등 불량</li>
+              <li><strong>원인:</strong> 불량 제품 납품 or 배선 접속 불량</li>
+              <li><strong>조치:</strong> 하자 범위 특정 후 보수 청구</li>
+              <li><strong>포인트:</strong> 제품 자체 불량인지 시공 불량인지 구분 — 제조사 A/S와 혼동 금지</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <h4>📡 사례 ② CCTV·통신 하자</h4>
+            <ul>
+              <li><strong>상황:</strong> CCTV 설치 공사 후 일부 구역 화질 불량 및 녹화 오류</li>
+              <li><strong>원인:</strong> 케이블 포설 불량, 커넥터 접속 불량</li>
+              <li><strong>조치:</strong> 전구간 재점검 후 불량 개소 재접속</li>
+              <li><strong>포인트:</strong> 준공 전 전체 카메라 정상 작동 현장 확인 필수</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-icon">🧱</span>
+        <span>타일·미장·석재 하자</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="info-box red" style="margin-top:12px;">
+          <span class="ib-icon">📌</span>
+          <div><strong>하자담보책임기간: 타일·미장·석공사 3년</strong></div>
+        </div>
+        <div class="grid-2" style="margin-top:10px;">
+          <div class="mini-card">
+            <h4>🧱 사례 ① 타일 탈락·균열</h4>
+            <ul>
+              <li><strong>상황:</strong> 화장실 벽·바닥 타일 교체 후 1년 내 타일 탈락</li>
+              <li><strong>원인:</strong> 접착 모르타르 배합 불량, 바탕면 청소 미흡</li>
+              <li><strong>조치:</strong> 탈락 우려 구간 전체 두드려보기 검사 후 재시공</li>
+              <li><strong>포인트:</strong> 준공 시 전체 타일 타음검사(두드리기) 요청</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <h4>🪨 사례 ② 외벽 석재 들뜸</h4>
+            <ul>
+              <li><strong>상황:</strong> 건물 외벽 석재 마감 후 2년 내 일부 석재 들뜸</li>
+              <li><strong>원인:</strong> 앵커 고정 불량, 줄눈 미충진</li>
+              <li><strong>조치:</strong> 안전을 위해 즉시 접근 금지 후 긴급 하자보수 요청</li>
+              <li><strong>포인트:</strong> 안전상 위험이 있는 하자는 긴급 조치 후 하자통보</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 하자 처리 절차 흐름 -->
+    <div class="card" style="margin-top:20px; border-top: 3px solid var(--danger);">
+      <div class="card-title">🗺️ 하자 발생 시 처리 절차</div>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-line">
+            <div class="flow-circle" style="background:var(--danger);">1</div>
+            <div class="flow-connector" style="background:linear-gradient(to bottom,var(--danger),var(--accent));"></div>
+          </div>
+          <div class="flow-content">
+            <h4>하자 발견 즉시 — 사진·영상 증거 확보</h4>
+            <p>발생 위치, 발생일, 하자 상태를 사진·영상으로 기록. 하자 원인 추정도 메모</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line">
+            <div class="flow-circle" style="background:var(--accent);">2</div>
+            <div class="flow-connector" style="background:linear-gradient(to bottom,var(--accent),var(--primary));"></div>
+          </div>
+          <div class="flow-content">
+            <h4>하자담보책임기간 확인</h4>
+            <p>계약서 및 지방계약법 시행규칙 제68조 기준으로 공종별 기간 확인. 기간 도과 여부 검토</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line">
+            <div class="flow-circle" style="background:var(--primary);">3</div>
+            <div class="flow-connector"></div>
+          </div>
+          <div class="flow-content">
+            <h4>계약상대자에게 하자보수 통보 (서면)</h4>
+            <p>하자 내용, 보수 요청 기한을 명시한 공문 발송. 구두 통보는 증거 불충분 — 반드시 공문으로</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line">
+            <div class="flow-circle" style="background:var(--secondary);">4</div>
+            <div class="flow-connector" style="background:linear-gradient(to bottom,var(--secondary),var(--gray));"></div>
+          </div>
+          <div class="flow-content">
+            <h4>보수 완료 확인</h4>
+            <p>보수 완료 후 현장 확인 및 하자처리 결과 기록 보관 (하자검사조서 작성)</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line">
+            <div class="flow-circle" style="background:var(--gray);">5</div>
+          </div>
+          <div class="flow-content">
+            <h4>보수 거부·지연 시 → 하자보증금 집행</h4>
+            <p>정당한 사유 없이 기한 내 보수 미이행 시 하자보수보증금으로 타업체에 직접 보수. 잔여액은 반환</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 감사 지적 핵심 포인트 -->
+    <div class="card" style="border-top: 3px solid var(--orange, #d97706);">
+      <div class="card-title">⚠️ 하자 관련 감사 지적 주요 포인트</div>
+      <ul class="checklist">
+        <li>
+          <span class="check" style="background:var(--danger-pale);color:var(--danger);">!</span>
+          <div><strong>하자검사 미실시</strong> — 연 2회 이상 정기 하자검사를 실시하지 않은 경우</div>
+        </li>
+        <li>
+          <span class="check" style="background:var(--danger-pale);color:var(--danger);">!</span>
+          <div><strong>최종검사 미실시</strong> — 하자담보책임기간 만료 전 최종검사를 별도로 실시하지 않은 경우</div>
+        </li>
+        <li>
+          <span class="check" style="background:var(--danger-pale);color:var(--danger);">!</span>
+          <div><strong>하자검사조서 미작성</strong> — 특히 조경공사(금액 무관 작성 의무)에서 누락 빈번</div>
+        </li>
+        <li>
+          <span class="check" style="background:var(--danger-pale);color:var(--danger);">!</span>
+          <div><strong>하자보수 청구 지연</strong> — 하자 발견 후 하자담보책임기간 내 청구하지 않아 권리 소멸</div>
+        </li>
+        <li>
+          <span class="check" style="background:var(--danger-pale);color:var(--danger);">!</span>
+          <div><strong>하자보수보증금 미반환 지연</strong> — 하자 없이 기간 만료 후 보증금을 제때 반환하지 않은 경우</div>
+        </li>
+        <li>
+          <span class="check" style="background:var(--danger-pale);color:var(--danger);">!</span>
+          <div><strong>구두 하자 통보</strong> — 전화나 구두로만 통보하고 서면 없이 기간 도과</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+  function showSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    event.currentTarget.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function toggleAcc(btn) {
+    const body = btn.nextElementSibling;
+    const isOpen = body.classList.contains('open');
+    // Close all
+    document.querySelectorAll('.accordion-body.open').forEach(b => b.classList.remove('open'));
+    document.querySelectorAll('.accordion-header.open').forEach(b => b.classList.remove('open'));
+    // Open clicked if it was closed
+    if (!isOpen) {
+      body.classList.add('open');
+      btn.classList.add('open');
+    }
+  }
+</script>
+</body>
+</html>
